@@ -3,7 +3,7 @@ package age.of.printscript.service.configuration
 import age.of.printscript.service.adapters.printscript.EngineCodeValidator
 import age.of.printscript.service.shared.CodeReader
 import age.of.printscript.service.validation.CodeValidator
-import age.of.printscript.service.validation.ValidateScript
+import age.of.printscript.service.validation.ValidateUseCase
 import engine.Engine
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -12,11 +12,11 @@ import org.springframework.context.annotation.Configuration
 @Configuration
 class ValidationConfiguration {
     @Bean
-    fun scriptValidator(): CodeValidator = EngineCodeValidator(Engine())
+    fun validator(): CodeValidator = EngineCodeValidator(Engine())
 
     @Bean
-    fun validateScript(
+    fun validateUseCase(
         codeReader: CodeReader,
         codeValidator: CodeValidator,
-    ): ValidateScript = ValidateScript(codeReader, codeValidator)
+    ): ValidateUseCase = ValidateUseCase(codeReader, codeValidator)
 }

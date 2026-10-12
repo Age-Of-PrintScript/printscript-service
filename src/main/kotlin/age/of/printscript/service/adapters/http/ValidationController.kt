@@ -1,6 +1,6 @@
 package age.of.printscript.service.adapters.http
 
-import age.of.printscript.service.validation.ValidateScript
+import age.of.printscript.service.validation.ValidateUseCase
 import age.of.printscript.service.validation.ValidationError
 import age.of.printscript.service.validation.ValidationResult
 import jakarta.validation.Valid
@@ -12,15 +12,15 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/validations")
+@RequestMapping("/validate")
 class ValidationController(
-    private val validateScript: ValidateScript,
+    private val validateUseCase: ValidateUseCase,
 ) {
     @PostMapping
     fun validate(
         @Valid @RequestBody request: ValidateRequest,
     ): ResponseEntity<*> =
-        when (val result = validateScript.execute(request.codeUrl, request.version)) {
+        when (val result = validateUseCase.execute(request.codeUrl, request.version)) {
             ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
             is ValidationResult.Invalid -> ResponseEntity.unprocessableEntity().body(result.toResponse())
         }

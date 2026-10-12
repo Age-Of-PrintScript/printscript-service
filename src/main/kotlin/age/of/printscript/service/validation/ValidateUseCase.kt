@@ -2,7 +2,7 @@ package age.of.printscript.service.validation
 
 import age.of.printscript.service.shared.CodeReader
 
-class ValidateScript(
+class ValidateUseCase(
     private val codeReader: CodeReader,
     private val validator: CodeValidator,
 ) {

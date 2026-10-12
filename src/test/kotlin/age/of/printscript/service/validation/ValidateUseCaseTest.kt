@@ -4,12 +4,12 @@ import age.of.printscript.service.shared.CodeReader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class ValidateScriptTest {
+class ValidateUseCaseTest {
     @Test
     fun `reads the requested code and validates it with the requested version`() {
         val reader = RecordingCodeReader("let name: string = \"Lucia\";")
         val validator = RecordingValidator(ValidationResult.Valid)
-        val useCase = ValidateScript(reader, validator)
+        val useCase = ValidateUseCase(reader, validator)
 
         val result = useCase.execute(codeUrl = "s3://scripts/example.ps", version = "1.1")
 
