@@ -1,7 +1,7 @@
 package age.of.printscript.service.adapters.storage
 
-import age.of.printscript.service.validation.CodeNotFoundException
-import age.of.printscript.service.validation.CodeReader
+import age.of.printscript.service.shared.CodeNotFoundException
+import age.of.printscript.service.shared.CodeReader
 
 class FakeCodeReader : CodeReader {
     override fun read(codeUrl: String): String =

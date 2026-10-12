@@ -1,6 +1,6 @@
 package age.of.printscript.service.adapters.storage
 
-import age.of.printscript.service.validation.CodeNotFoundException
+import age.of.printscript.service.shared.CodeNotFoundException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.Test

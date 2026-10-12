@@ -17,8 +17,3 @@ pluginManagement {
 }
 rootProject.name = "printscript-service"
 
-// Permite usar la version de printscript que este local en mi maquina, en el ci
-// no existe asi que usa la libreria publicada en maven
-if (file("../printscript").isDirectory) {
-    includeBuild("../printscript")
-}

@@ -2,7 +2,7 @@ package age.of.printscript.service.configuration
 
 import age.of.printscript.service.adapters.storage.FakeCodeReader
 import age.of.printscript.service.adapters.storage.UnavailableCodeReader
-import age.of.printscript.service.validation.CodeReader
+import age.of.printscript.service.shared.CodeReader
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

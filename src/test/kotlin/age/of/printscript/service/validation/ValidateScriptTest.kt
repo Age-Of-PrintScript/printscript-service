@@ -1,5 +1,6 @@
 package age.of.printscript.service.validation
 
+import age.of.printscript.service.shared.CodeReader
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -31,7 +32,7 @@ class ValidateScriptTest {
 
     private class RecordingValidator(
         private val result: ValidationResult,
-    ) : ScriptValidator {
+    ) : CodeValidator {
         var source: String? = null
         var version: String? = null
 

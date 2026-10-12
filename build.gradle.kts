@@ -27,7 +27,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("printscript.grupo1:engine:1.0.0")
+    implementation("printscript.grupo1:engine:1.0.3")
+    implementation("printscript.grupo1:linter:1.0.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
 }

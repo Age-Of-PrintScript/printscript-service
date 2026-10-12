@@ -1,15 +1,15 @@
 package age.of.printscript.service.adapters.printscript
 
-import age.of.printscript.service.validation.ScriptValidator
+import age.of.printscript.service.validation.CodeValidator
 import age.of.printscript.service.validation.ValidationError
 import age.of.printscript.service.validation.ValidationResult
 import engine.Engine
 import engine.ExitCode
 import engine.Logger
 
-class EngineScriptValidator(
+class EngineCodeValidator(
     private val engine: Engine,
-) : ScriptValidator {
+) : CodeValidator {
     override fun validate(
         source: String,
         version: String,

@@ -6,8 +6,8 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
-class EngineScriptValidatorTest {
-    private val validator = EngineScriptValidator(Engine())
+class EngineCodeValidatorTest {
+    private val validator = EngineCodeValidator(Engine())
 
     @Test
     fun `returns valid for syntactically valid source`() {

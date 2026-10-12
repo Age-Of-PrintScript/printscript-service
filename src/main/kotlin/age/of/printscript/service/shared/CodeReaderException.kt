@@ -1,4 +1,4 @@
-package age.of.printscript.service.validation
+package age.of.printscript.service.shared
 
 class CodeNotFoundException(
     codeUrl: String,

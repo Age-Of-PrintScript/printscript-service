@@ -1,6 +1,6 @@
 package age.of.printscript.service.validation
 
-interface ScriptValidator {
+interface CodeValidator {
     fun validate(
         source: String,
         version: String,

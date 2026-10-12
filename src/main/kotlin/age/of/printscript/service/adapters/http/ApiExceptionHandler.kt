@@ -1,7 +1,7 @@
 package age.of.printscript.service.adapters.http
 
-import age.of.printscript.service.validation.CodeNotFoundException
-import age.of.printscript.service.validation.CodeReaderUnavailableException
+import age.of.printscript.service.shared.CodeNotFoundException
+import age.of.printscript.service.shared.CodeReaderUnavailableException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
