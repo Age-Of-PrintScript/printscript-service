@@ -32,5 +32,5 @@ class LinterController (
 data class ValidateLinterRequest(
     @field:NotBlank val codeUrl: String,
     @field:NotBlank val version: String,
-    @field:NotBlank val config: String? = null
+    val config: String? = null,
 )
