@@ -1,6 +1,7 @@
 package age.of.printscript.service.lint.infrastructure.http
 
 import age.of.printscript.service.lint.application.LinterUseCase
+import age.of.printscript.service.lint.application.InvalidLintOptionsException
 import age.of.printscript.service.lint.domain.CodeLinter
 import age.of.printscript.service.lint.domain.Warning
 import age.of.printscript.service.shared.application.CodeReader
@@ -23,6 +24,7 @@ class LinterControllerTest {
     private val mockMvc: MockMvc =
         MockMvcBuilders
             .standaloneSetup(LinterController(LinterUseCase(codeReader, codeLinter)))
+            .setControllerAdvice(LinterExceptionHandler())
             .build()
 
     @Test
@@ -44,6 +46,31 @@ class LinterControllerTest {
         assertEquals("let greeting: string = \"Hola\";", codeLinter.source)
         assertEquals("1.1", codeLinter.version)
         assertNull(codeLinter.config)
+    }
+
+    @Test
+    fun `returns a bad request when lint options are invalid`() {
+        val failingLinter =
+            object : CodeLinter {
+                override fun lint(source: String, version: String, config: String?): List<Warning> =
+                    throw InvalidLintOptionsException("Unsupported version: $version", IllegalArgumentException())
+            }
+        val mockMvc =
+            MockMvcBuilders
+                .standaloneSetup(LinterController(LinterUseCase(codeReader, failingLinter)))
+                .setControllerAdvice(LinterExceptionHandler())
+                .build()
+
+        mockMvc
+            .perform(
+                post("/lint")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"codeUrl":"fake/1","version":"2.0"}"""),
+            ).andExpectAll(
+                status().isBadRequest,
+                content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON),
+                jsonPath("$.message").value("Unsupported version: 2.0"),
+            )
     }
 
     private class RecordingCodeReader(
