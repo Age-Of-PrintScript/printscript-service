@@ -51,6 +51,16 @@ class ValidationControllerTest {
             )
     }
 
+    @Test
+    fun `rejects an unsupported version before validating a new source`() {
+        mockMvcFor(ValidationResult.Valid)
+            .perform(
+                post("/validate/new")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"code":"let greeting: string = \"Hola\";","version":"2.0"}"""),
+            ).andExpect(status().isBadRequest)
+    }
+
     private fun mockMvcFor(result: ValidationResult): MockMvc {
         val validator =
             object : CodeValidator {
