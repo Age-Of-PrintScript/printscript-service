@@ -22,7 +22,7 @@ class ValidationController(
     ): ResponseEntity<*> =
         when (val result = validateUseCase.execute(request.codeUrl, request.version)) {
             ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
-            is ValidationResult.Invalid -> ResponseEntity.unprocessableEntity().body(result.toResponse())
+            is ValidationResult.Invalid -> ResponseEntity.ok(result.toResponse())
         }
 }
 
