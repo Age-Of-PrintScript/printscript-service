@@ -26,10 +26,7 @@ class EngineCodeValidator(
             ExitCode.SUCCESS -> ValidationResult.Valid
             ExitCode.FAILURE ->
                 ValidationResult.Invalid(
-                    errors =
-                        messages
-                            .filterNot { it == BUILD_FAILED_MESSAGE }
-                            .map(::ValidationError),
+                    errors = messages.filterNot { it == BUILD_FAILED_MESSAGE }.map(::ValidationError),
                 )
         }
     }

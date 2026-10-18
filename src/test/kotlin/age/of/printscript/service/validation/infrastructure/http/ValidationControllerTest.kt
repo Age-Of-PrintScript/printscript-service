@@ -1,9 +1,9 @@
 package age.of.printscript.service.validation.infrastructure.http
 
 import age.of.printscript.service.shared.application.CodeReader
-import age.of.printscript.service.validation.domain.CodeValidator
 import age.of.printscript.service.validation.application.ValidateSourceUseCase
 import age.of.printscript.service.validation.application.ValidateUseCase
+import age.of.printscript.service.validation.domain.CodeValidator
 import age.of.printscript.service.validation.domain.ValidationError
 import age.of.printscript.service.validation.domain.ValidationResult
 import org.junit.jupiter.api.Test

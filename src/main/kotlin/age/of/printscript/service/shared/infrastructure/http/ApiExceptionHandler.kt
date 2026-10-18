@@ -11,12 +11,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 @RestControllerAdvice
 class ApiExceptionHandler {
     @ExceptionHandler(CodeNotFoundException::class)
-    fun handleCodeNotFound(exception: CodeNotFoundException): ResponseEntity<ApiErrorResponse> =
-        error(HttpStatus.NOT_FOUND, exception.message.orEmpty())
+    fun handleCodeNotFound(exception: CodeNotFoundException): ResponseEntity<ApiErrorResponse> = error(HttpStatus.NOT_FOUND, exception.message.orEmpty())
 
     @ExceptionHandler(CodeReaderUnavailableException::class)
-    fun handleUnavailableReader(exception: CodeReaderUnavailableException): ResponseEntity<ApiErrorResponse> =
-        error(HttpStatus.SERVICE_UNAVAILABLE, exception.message.orEmpty())
+    fun handleUnavailableReader(exception: CodeReaderUnavailableException): ResponseEntity<ApiErrorResponse> = error(HttpStatus.SERVICE_UNAVAILABLE, exception.message.orEmpty())
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleInvalidRequest(exception: MethodArgumentNotValidException): ResponseEntity<ApiErrorResponse> {

@@ -1,7 +1,7 @@
 package age.of.printscript.service.lint.infrastructure.configuration
 
-import age.of.printscript.service.lint.domain.CodeLinter
 import age.of.printscript.service.lint.application.LinterUseCase
+import age.of.printscript.service.lint.domain.CodeLinter
 import age.of.printscript.service.lint.infrastructure.printscript.EngineCodeLinter
 import age.of.printscript.service.shared.application.CodeReader
 import linter.Linter
