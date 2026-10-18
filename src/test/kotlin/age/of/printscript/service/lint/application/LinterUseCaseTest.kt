@@ -16,11 +16,12 @@ class LinterUseCaseTest {
         val useCase = LinterUseCase(reader, linter)
         val config = "{\"rules\": {\"unused-variable\": \"warning\"}}"
 
-        val result = useCase.execute(
-            codeUrl = "s3://scripts/example.ps",
-            version = "1.1",
-            config = config,
-        )
+        val result =
+            useCase.execute(
+                codeUrl = "s3://scripts/example.ps",
+                version = "1.1",
+                config = config,
+            )
 
         assertEquals(warnings, result)
         assertEquals("s3://scripts/example.ps", reader.readUrl)

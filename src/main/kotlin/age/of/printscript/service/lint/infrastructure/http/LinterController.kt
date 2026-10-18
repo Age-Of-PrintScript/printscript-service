@@ -12,21 +12,20 @@ import org.springframework.web.bind.annotation.RestController
 
 @RestController
 @RequestMapping("/lint")
-class LinterController (
+class LinterController(
     private val linterUseCase: LinterUseCase,
 ) {
     @PostMapping
     fun lint(
-        @Valid @RequestBody request: ValidateLinterRequest
+        @Valid @RequestBody request: ValidateLinterRequest,
     ): ResponseEntity<List<Warning>> =
-        ResponseEntity.ok (
+        ResponseEntity.ok(
             linterUseCase.execute(
                 request.codeUrl,
                 request.version,
-                request.config
-            )
+                request.config,
+            ),
         )
-
 }
 
 data class ValidateLinterRequest(

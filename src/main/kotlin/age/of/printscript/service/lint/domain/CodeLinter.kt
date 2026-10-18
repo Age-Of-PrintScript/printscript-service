@@ -4,6 +4,6 @@ interface CodeLinter {
     fun lint(
         source: String,
         version: String,
-        config: String?
+        config: String?,
     ): List<Warning>
 }

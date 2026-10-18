@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/validate")
 class ValidationController(
     private val validate: ValidateUseCase,
-    private val validateSource: ValidateSourceUseCase
+    private val validateSource: ValidateSourceUseCase,
 ) {
     @PostMapping
     fun validate(

@@ -1,8 +1,8 @@
 package age.of.printscript.service.lint.infrastructure.http
 
-import age.of.printscript.service.lint.application.LinterUseCase
-import age.of.printscript.service.lint.application.InvalidLintOptionsException
 import age.of.printscript.service.lint.domain.CodeLinter
+import age.of.printscript.service.lint.application.InvalidLintOptionsException
+import age.of.printscript.service.lint.application.LinterUseCase
 import age.of.printscript.service.lint.domain.Warning
 import age.of.printscript.service.shared.application.CodeReader
 import age.of.printscript.service.shared.domain.Position
@@ -52,8 +52,11 @@ class LinterControllerTest {
     fun `returns a bad request when lint options are invalid`() {
         val failingLinter =
             object : CodeLinter {
-                override fun lint(source: String, version: String, config: String?): List<Warning> =
-                    throw InvalidLintOptionsException("Unsupported version: $version", IllegalArgumentException())
+                override fun lint(
+                    source: String,
+                    version: String,
+                    config: String?,
+                ): List<Warning> = throw InvalidLintOptionsException("Unsupported version: $version", IllegalArgumentException())
             }
         val mockMvc =
             MockMvcBuilders
