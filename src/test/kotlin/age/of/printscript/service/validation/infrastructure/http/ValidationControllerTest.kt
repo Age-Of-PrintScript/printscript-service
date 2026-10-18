@@ -1,12 +1,14 @@
 package age.of.printscript.service.validation.infrastructure.http
 
 import age.of.printscript.service.shared.application.CodeReader
+import age.of.printscript.service.validation.application.ValidateSourceUseCase
 import age.of.printscript.service.validation.application.ValidateUseCase
 import age.of.printscript.service.validation.domain.CodeValidator
 import age.of.printscript.service.validation.domain.ValidationError
 import age.of.printscript.service.validation.domain.ValidationResult
 import org.junit.jupiter.api.Test
 import org.springframework.http.MediaType
+import org.springframework.test.web.servlet.MockMvc
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.content
 import org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath
@@ -35,23 +37,43 @@ class ValidationControllerTest {
             )
     }
 
-    private fun mockMvcFor(result: ValidationResult) =
-        MockMvcBuilders
+    @Test
+    fun `returns validation errors when validating a new source`() {
+        mockMvcFor(ValidationResult.Invalid(listOf(ValidationError("Unexpected token"))))
+            .perform(
+                post("/validate/new")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""{"code":"let greeting: string = ;","version":"1.1"}"""),
+            ).andExpectAll(
+                status().isOk,
+                content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON),
+                jsonPath("$.errors[0].message").value("Unexpected token"),
+            )
+    }
+
+    private fun mockMvcFor(result: ValidationResult): MockMvc {
+        val validator =
+            object : CodeValidator {
+                override fun validate(
+                    source: String,
+                    version: String,
+                ): ValidationResult = result
+            }
+
+        return MockMvcBuilders
             .standaloneSetup(
                 ValidationController(
-                    ValidateUseCase(
-                        codeReader = object : CodeReader {
-                            override fun read(codeUrl: String): String = "let greeting: string = \"Hola\";"
-                        },
-                        validator = object : CodeValidator {
-                            override fun validate(
-                                source: String,
-                                version: String,
-                            ): ValidationResult = result
-                        },
-                    ),
+                    validate =
+                        ValidateUseCase(
+                            codeReader = object : CodeReader {
+                                override fun read(codeUrl: String): String = "let greeting: string = \"Hola\";"
+                            },
+                            validator = validator,
+                        ),
+                    validateSource = ValidateSourceUseCase(validator),
                 ),
             ).build()
+    }
 
     private fun validationRequest() =
         post("/validate")

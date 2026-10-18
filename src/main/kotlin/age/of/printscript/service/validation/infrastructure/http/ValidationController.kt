@@ -1,5 +1,6 @@
 package age.of.printscript.service.validation.infrastructure.http
 
+import age.of.printscript.service.validation.application.ValidateSourceUseCase
 import age.of.printscript.service.validation.application.ValidateUseCase
 import age.of.printscript.service.validation.domain.ValidationError
 import age.of.printscript.service.validation.domain.ValidationResult
@@ -14,17 +15,32 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/validate")
 class ValidationController(
-    private val validateUseCase: ValidateUseCase,
+    private val validate: ValidateUseCase,
+    private val validateSource: ValidateSourceUseCase
 ) {
     @PostMapping
     fun validate(
         @Valid @RequestBody request: ValidateRequest,
     ): ResponseEntity<*> =
-        when (val result = validateUseCase.execute(request.codeUrl, request.version)) {
+        when (val result = validate.execute(request.codeUrl, request.version)) {
+            ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
+            is ValidationResult.Invalid -> ResponseEntity.ok(result.toResponse())
+        }
+
+    @PostMapping("/new")
+    fun validateNew(
+        @Valid @RequestBody request: ValidateNewRequest,
+    ): ResponseEntity<*> =
+        when (val result = validateSource.execute(request.code, request.version)) {
             ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
             is ValidationResult.Invalid -> ResponseEntity.ok(result.toResponse())
         }
 }
+
+data class ValidateNewRequest(
+    @field:NotBlank val code: String,
+    @field:NotBlank val version: String,
+)
 
 data class ValidateRequest(
     @field:NotBlank val codeUrl: String,
