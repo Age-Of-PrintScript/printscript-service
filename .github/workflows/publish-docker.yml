@@ -1,0 +1,80 @@
+name: Publish Docker Image to GHCR
+on:
+    push:
+        branches:
+            - main
+            - dev
+    workflow_dispatch: # permite correr el workflow manualmente desde github actions
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    check:
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
+
+            -   name: Set up JDK 21
+                uses: actions/setup-java@v4
+                with:
+                    java-version: '21'
+                    distribution: 'temurin'
+
+            -   name: Setup Gradle
+                uses: gradle/actions/setup-gradle@v4
+
+            -   name: Run checks (Lint, Tests, Jacoco)
+                env:
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # para que pueda descargar printscript
+                    GITHUB_ACTOR: ${{ github.actor }}
+                run: ./gradlew check
+
+    publish:
+        needs: check
+        if: github.event_name != 'pull_request'
+        runs-on: ubuntu-latest
+        permissions:
+            contents: read
+            packages: write # para que pueda subir imagenes
+        steps:
+            -   name: Checkout repository
+                uses: actions/checkout@v4
+
+            -   name: Set up Docker Buildx # por los secrets que se le pasan en el dockerfile
+                uses: docker/setup-buildx-action@v3
+
+            -   name: Log in to GitHub Container Registry
+                uses: docker/login-action@v3
+                with:
+                    registry: ghcr.io
+                    username: ${{ github.actor }}
+                    password: ${{ secrets.GITHUB_TOKEN }}
+
+            -   name: Extract Docker metadata (Tags & Labels)
+                id: meta
+                uses: docker/metadata-action@v5
+                with:
+                    images: ghcr.io/${{ github.repository }}
+                    tags: |
+                        type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
+                        type=sha,prefix=dev-,enable=${{ github.ref_name == 'dev' }}
+                        type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
+                        type=sha,prefix=,enable=${{ github.ref_name == 'main' }}
+
+            -   name: Build and push Docker image
+                uses: docker/build-push-action@v6
+                with:
+                    context: .
+                    push: true
+                    tags: ${{ steps.meta.outputs.tags }}
+                    labels: ${{ steps.meta.outputs.labels }}
+                    cache-from: type=gha
+                    cache-to: type=gha,mode=max
+                    secrets: |
+                        "gradle_properties=gpr.user=${{ github.actor }}
+                        gpr.key=${{ secrets.GITHUB_TOKEN }}"
