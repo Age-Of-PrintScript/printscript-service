@@ -7,7 +7,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
 /**
- * Translates invalid linter versions or configurations into the API's 400 error contract.
+ * A controller advice centralizes exception handling for one or more HTTP controllers,
+ * allowing them to return consistent responses without duplicating error-handling logic.
  */
 @RestControllerAdvice(assignableTypes = [LinterController::class])
 class LinterExceptionHandler {
