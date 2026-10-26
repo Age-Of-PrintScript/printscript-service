@@ -27,6 +27,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("printscript.grupo1:printscript-jobs:1.0.1")
     implementation("printscript.grupo1:engine:1.0.3")
     implementation("printscript.grupo1:linter:1.0.3")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
