@@ -2,6 +2,7 @@ package age.of.printscript.service.shared.application
 
 class CodeNotFoundException(
     codeUrl: String,
-) : RuntimeException("Code was not found at '$codeUrl'.")
+    cause: Throwable? = null,
+) : RuntimeException("Code was not found at '$codeUrl'.", cause)
 
 class CodeReaderUnavailableException : RuntimeException("No code storage has been configured.")

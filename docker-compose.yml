@@ -1,0 +1,54 @@
+services:
+    azurite:
+        image: mcr.microsoft.com/azure-storage/azurite
+        container_name: printscript-azurite
+        ports:
+            - "10000:10000"
+            - "10001:10001"
+            - "10002:10002"
+        volumes:
+            - blob_data:/workspace
+
+    asset-service:
+        image: ghcr.io/austral-ingsis/snippet-asset-service:main.14
+        container_name: printscript-asset-service
+        ports:
+            - "8083:8080"
+        environment:
+            AZURE_HOST: "http://azurite"
+            NEW_RELIC_APP_NAME: "asset-service"
+            NEW_RELIC_AGENT_ENABLED: "false"
+        depends_on:
+            - azurite
+
+    redis:
+        image: redis:7-alpine
+        container_name: printscript-redis
+        command: redis-server --appendonly yes
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis_data:/data
+
+    app:
+        build:
+            context: .
+            secrets:
+                - gradle_properties
+        container_name: printscript-service
+        ports:
+            - "8080:8080"
+        environment:
+            ASSET_SERVICE_URL: http://asset-service:8080
+            REDIS_HOST: redis
+        depends_on:
+            - asset-service
+            - redis
+
+volumes:
+    blob_data:
+    redis_data:
+
+secrets:
+    gradle_properties:
+        file: ~/.gradle/gradle.properties
