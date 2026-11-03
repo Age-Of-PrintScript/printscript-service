@@ -9,6 +9,10 @@ COPY settings.gradle.kts .
 
 RUN chmod +x gradlew
 
+RUN --mount=type=secret,id=gradle_properties,target=/root/.gradle/gradle.properties \
+    --mount=type=cache,target=/root/.gradle/caches \
+    ./gradlew dependencies --no-daemon
+
 COPY src src
 
 RUN --mount=type=secret,id=gradle_properties,target=/root/.gradle/gradle.properties \
