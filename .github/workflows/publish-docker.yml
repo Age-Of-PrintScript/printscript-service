@@ -63,8 +63,9 @@ jobs:
                     tags: |
                         type=raw,value=dev,enable=${{ github.ref_name == 'dev' }}
                         type=sha,prefix=dev-,enable=${{ github.ref_name == 'dev' }}
+                        type=raw,value=prod,enable=${{ github.ref_name == 'main' }}
+                        type=sha,prefix=prod-,enable=${{ github.ref_name == 'main' }}
                         type=raw,value=latest,enable=${{ github.ref_name == 'main' }}
-                        type=sha,prefix=,enable=${{ github.ref_name == 'main' }}
 
             -   name: Build and push Docker image
                 uses: docker/build-push-action@v6
