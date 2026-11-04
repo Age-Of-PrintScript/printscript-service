@@ -79,3 +79,24 @@ jobs:
                     secrets: |
                         "gradle_properties=gpr.user=${{ github.actor }}
                         gpr.key=${{ secrets.GITHUB_TOKEN }}"
+
+
+    deploy:
+        needs: publish
+        if: github.event_name != 'pull_request'
+        runs-on: ubuntu-latest
+        env:
+            DEPLOY_ENV: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+        steps:
+            -   name: Redeploy service on the VM (docker service update)
+                uses: appleboy/ssh-action@v1.2.0
+                with:
+                    host: ${{ github.ref_name == 'main' && secrets.PROD_VM_HOST || secrets.DEV_VM_HOST }}
+                    username: ${{ secrets.VM_USER }}
+                    key: ${{ github.ref_name == 'main' && secrets.PROD_VM_SSH_KEY || secrets.DEV_VM_SSH_KEY }}
+                    envs: DEPLOY_ENV
+                    script: |
+                        set -e
+                        docker service update --force --with-registry-auth \
+                            --image ghcr.io/age-of-printscript/printscript-service:${DEPLOY_ENV} \
+                            ingsis_printscript-service
