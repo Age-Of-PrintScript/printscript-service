@@ -29,8 +29,8 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("printscript.grupo1:printscript-jobs:1.0.1")
-    implementation("printscript.grupo1:engine:1.0.3")
-    implementation("printscript.grupo1:linter:1.0.3")
+    implementation("printscript.grupo1:engine:1.1.1")
+    implementation("printscript.grupo1:linter:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
