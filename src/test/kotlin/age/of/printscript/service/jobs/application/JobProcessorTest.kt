@@ -209,8 +209,7 @@ class JobProcessorTest {
             testUseCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = listOf("Alice"),
-                expectedOutputs = listOf("Hello Alice"),
+                testUrl = "test/url",
             ),
         ).thenReturn(TestResult.Passed)
 
@@ -220,8 +219,7 @@ class JobProcessorTest {
                 snippetId = "snip-7",
                 snippetUrl = "snippet/url",
                 languageVersion = "1.1",
-                inputs = listOf("Alice"),
-                expectedOutputs = listOf("Hello Alice"),
+                testUrl = "test/url",
             )
 
         val response = processor.process(request) as TestJobResponse
@@ -229,6 +227,7 @@ class JobProcessorTest {
         assertEquals("job-7", response.jobId)
         assertTrue(response.success)
         assertNull(response.message)
+        verify(testUseCase).execute("snippet/url", "1.1", "test/url")
     }
 
     @Test
@@ -237,8 +236,7 @@ class JobProcessorTest {
             testUseCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = listOf("Bob"),
-                expectedOutputs = listOf("Hello Alice"),
+                testUrl = "test/url",
             ),
         ).thenReturn(TestResult.Failed("Expected outputs [Hello Alice] but got [Hello Bob]"))
 
@@ -248,8 +246,7 @@ class JobProcessorTest {
                 snippetId = "snip-7",
                 snippetUrl = "snippet/url",
                 languageVersion = "1.1",
-                inputs = listOf("Bob"),
-                expectedOutputs = listOf("Hello Alice"),
+                testUrl = "test/url",
             )
 
         val response = processor.process(request) as TestJobResponse

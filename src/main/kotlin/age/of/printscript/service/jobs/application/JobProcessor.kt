@@ -96,8 +96,7 @@ class JobProcessor(
                 testUseCase.execute(
                     codeUrl = request.snippetUrl,
                     version = request.languageVersion,
-                    inputs = request.inputs,
-                    expectedOutputs = request.expectedOutputs,
+                    testUrl = request.testUrl,
                 )
         ) {
             TestResult.Passed ->
