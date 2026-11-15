@@ -7,6 +7,7 @@ import age.of.printscript.jobs.LintJobRequest
 import age.of.printscript.jobs.LintJobResponse
 import age.of.printscript.jobs.SystemErrorJobResponse
 import age.of.printscript.jobs.TestJobRequest
+import age.of.printscript.jobs.TestJobResponse
 import age.of.printscript.jobs.ValidateJobRequest
 import age.of.printscript.jobs.ValidateJobResponse
 import age.of.printscript.service.lint.application.LinterUseCase
@@ -14,11 +15,14 @@ import age.of.printscript.service.lint.domain.Warning
 import age.of.printscript.service.shared.application.CodeNotFoundException
 import age.of.printscript.service.shared.application.CodeReader
 import age.of.printscript.service.shared.domain.Position
+import age.of.printscript.service.test.application.TestUseCase
+import age.of.printscript.service.test.domain.TestResult
 import age.of.printscript.service.validation.application.ValidateUseCase
 import age.of.printscript.service.validation.domain.ValidationError
 import age.of.printscript.service.validation.domain.ValidationResult
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
@@ -27,9 +31,10 @@ import org.mockito.Mockito.`when`
 class JobProcessorTest {
     private val validateUseCase = mock(ValidateUseCase::class.java)
     private val linterUseCase = mock(LinterUseCase::class.java)
+    private val testUseCase = mock(TestUseCase::class.java)
     private val codeReader = mock(CodeReader::class.java)
 
-    private val processor = JobProcessor(validateUseCase, linterUseCase, codeReader)
+    private val processor = JobProcessor(validateUseCase, linterUseCase, testUseCase, codeReader)
 
     @Test
     fun `processes ValidateJobRequest successfully when valid`() {
@@ -169,19 +174,59 @@ class JobProcessorTest {
     }
 
     @Test
-    fun `returns SystemErrorJobResponse for TestJobRequest`() {
+    fun `processes TestJobRequest successfully when test passes`() {
+        `when`(
+            testUseCase.execute(
+                codeUrl = "snippet/url",
+                version = "1.1",
+                inputs = listOf("Alice"),
+                expectedOutputs = listOf("Hello Alice"),
+            ),
+        ).thenReturn(TestResult.Passed)
+
         val request =
             TestJobRequest(
                 jobId = "job-7",
                 snippetId = "snip-7",
                 snippetUrl = "snippet/url",
                 languageVersion = "1.1",
+                inputs = listOf("Alice"),
+                expectedOutputs = listOf("Hello Alice"),
             )
 
-        val response = processor.process(request) as SystemErrorJobResponse
+        val response = processor.process(request) as TestJobResponse
 
         assertEquals("job-7", response.jobId)
-        assertEquals("TEST is not implemented yet", response.reason)
+        assertTrue(response.success)
+        assertNull(response.message)
+    }
+
+    @Test
+    fun `processes TestJobRequest when test fails`() {
+        `when`(
+            testUseCase.execute(
+                codeUrl = "snippet/url",
+                version = "1.1",
+                inputs = listOf("Bob"),
+                expectedOutputs = listOf("Hello Alice"),
+            ),
+        ).thenReturn(TestResult.Failed("Expected outputs [Hello Alice] but got [Hello Bob]"))
+
+        val request =
+            TestJobRequest(
+                jobId = "job-7b",
+                snippetId = "snip-7",
+                snippetUrl = "snippet/url",
+                languageVersion = "1.1",
+                inputs = listOf("Bob"),
+                expectedOutputs = listOf("Hello Alice"),
+            )
+
+        val response = processor.process(request) as TestJobResponse
+
+        assertEquals("job-7b", response.jobId)
+        assertFalse(response.success)
+        assertEquals("Expected outputs [Hello Alice] but got [Hello Bob]", response.message)
     }
 
     @Test
