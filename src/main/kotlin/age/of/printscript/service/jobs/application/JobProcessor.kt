@@ -15,9 +15,9 @@ import age.of.printscript.jobs.TestJobResponse
 import age.of.printscript.jobs.ValidateJobRequest
 import age.of.printscript.jobs.ValidateJobResponse
 import age.of.printscript.jobs.ValidationErrorDto
+import age.of.printscript.service.format.application.FormatUseCase
 import age.of.printscript.service.lint.application.LinterUseCase
 import age.of.printscript.service.lint.domain.Warning
-import age.of.printscript.service.shared.application.CodeReader
 import age.of.printscript.service.test.application.TestUseCase
 import age.of.printscript.service.test.domain.TestResult
 import age.of.printscript.service.validation.application.ValidateUseCase
@@ -29,8 +29,8 @@ import org.springframework.stereotype.Component
 class JobProcessor(
     private val validateUseCase: ValidateUseCase,
     private val linterUseCase: LinterUseCase,
+    private val formatUseCase: FormatUseCase,
     private val testUseCase: TestUseCase,
-    private val codeReader: CodeReader,
 ) {
     private val logger = LoggerFactory.getLogger(JobProcessor::class.java)
 
@@ -81,7 +81,12 @@ class JobProcessor(
     }
 
     private fun processFormat(request: FormatJobRequest): JobResponse {
-        codeReader.read(request.snippetUrl)
+        val config = buildFormatConfig(request.rules)
+        formatUseCase.execute(
+            codeUrl = request.snippetUrl,
+            version = request.languageVersion,
+            config = config,
+        )
         return FormatJobResponse(jobId = request.jobId)
     }
 
@@ -127,6 +132,21 @@ class JobProcessor(
                 }
             }
         return """{"rules":[$entries]}"""
+    }
+
+    private fun buildFormatConfig(rules: Map<String, String?>): String? {
+        if (rules.isEmpty()) return null
+        val entries =
+            rules.entries.joinToString(",") { (name, value) ->
+                val formattedValue =
+                    when {
+                        value == null -> "true"
+                        value.toIntOrNull() != null || value == "true" || value == "false" -> value
+                        else -> "\"$value\""
+                    }
+                "\"$name\":$formattedValue"
+            }
+        return "{$entries}"
     }
 
     private companion object {
