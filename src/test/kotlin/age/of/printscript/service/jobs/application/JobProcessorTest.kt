@@ -10,10 +10,10 @@ import age.of.printscript.jobs.TestJobRequest
 import age.of.printscript.jobs.TestJobResponse
 import age.of.printscript.jobs.ValidateJobRequest
 import age.of.printscript.jobs.ValidateJobResponse
+import age.of.printscript.service.format.application.FormatUseCase
 import age.of.printscript.service.lint.application.LinterUseCase
 import age.of.printscript.service.lint.domain.Warning
 import age.of.printscript.service.shared.application.CodeNotFoundException
-import age.of.printscript.service.shared.application.CodeReader
 import age.of.printscript.service.shared.domain.Position
 import age.of.printscript.service.test.application.TestUseCase
 import age.of.printscript.service.test.domain.TestResult
@@ -26,15 +26,16 @@ import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
+import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 
 class JobProcessorTest {
     private val validateUseCase = mock(ValidateUseCase::class.java)
     private val linterUseCase = mock(LinterUseCase::class.java)
+    private val formatUseCase = mock(FormatUseCase::class.java)
     private val testUseCase = mock(TestUseCase::class.java)
-    private val codeReader = mock(CodeReader::class.java)
 
-    private val processor = JobProcessor(validateUseCase, linterUseCase, testUseCase, codeReader)
+    private val processor = JobProcessor(validateUseCase, linterUseCase, formatUseCase, testUseCase)
 
     @Test
     fun `processes ValidateJobRequest successfully when valid`() {
@@ -141,8 +142,8 @@ class JobProcessorTest {
     }
 
     @Test
-    fun `processes FormatJobRequest successfully`() {
-        `when`(codeReader.read("snippet/url")).thenReturn("let x: number = 5;")
+    fun `processes FormatJobRequest with empty rules`() {
+        `when`(formatUseCase.execute("snippet/url", "1.1", null)).thenReturn("let x: number = 5;")
 
         val request =
             FormatJobRequest(
@@ -150,11 +151,40 @@ class JobProcessorTest {
                 snippetId = "snip-5",
                 snippetUrl = "snippet/url",
                 languageVersion = "1.1",
+                rules = emptyMap(),
             )
 
         val response = processor.process(request) as FormatJobResponse
 
         assertEquals("job-5", response.jobId)
+        verify(formatUseCase).execute("snippet/url", "1.1", null)
+    }
+
+    @Test
+    fun `processes FormatJobRequest with specific rules`() {
+        val expectedConfig =
+            """{"enforce-spacing-around-equals":true,"indent-inside-if":4,"if-brace-same-line":false,"custom-rule":"text"}"""
+        `when`(formatUseCase.execute("snippet/url", "1.1", expectedConfig)).thenReturn("let x: number = 5;")
+
+        val request =
+            FormatJobRequest(
+                jobId = "job-5b",
+                snippetId = "snip-5",
+                snippetUrl = "snippet/url",
+                languageVersion = "1.1",
+                rules =
+                    linkedMapOf(
+                        "enforce-spacing-around-equals" to null,
+                        "indent-inside-if" to "4",
+                        "if-brace-same-line" to "false",
+                        "custom-rule" to "text",
+                    ),
+            )
+
+        val response = processor.process(request) as FormatJobResponse
+
+        assertEquals("job-5b", response.jobId)
+        verify(formatUseCase).execute("snippet/url", "1.1", expectedConfig)
     }
 
     @Test
@@ -231,7 +261,7 @@ class JobProcessorTest {
 
     @Test
     fun `returns SystemErrorJobResponse when an unhandled exception occurs`() {
-        `when`(codeReader.read("snippet/url")).thenThrow(CodeNotFoundException("snippet/url"))
+        `when`(formatUseCase.execute("snippet/url", "1.1", null)).thenThrow(CodeNotFoundException("snippet/url"))
 
         val request =
             FormatJobRequest(
