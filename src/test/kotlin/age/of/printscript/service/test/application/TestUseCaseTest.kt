@@ -11,19 +11,20 @@ class TestUseCaseTest {
     @Test
     fun `returns Passed when outputs match expectedOutputs`() {
         val reader = RecordingCodeReader("println(\"hi\");")
+        val testReader = RecordingTestContentReader(TestContent(listOf("in-1"), listOf("hi")))
         val executor = RecordingCodeExecutor(ExecutionResult.Success(listOf("hi")))
-        val useCase = TestUseCase(reader, executor)
+        val useCase = TestUseCase(reader, testReader, executor)
 
         val result =
             useCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = listOf("in-1"),
-                expectedOutputs = listOf("hi"),
+                testUrl = "test/url",
             )
 
         assertEquals(TestResult.Passed, result)
         assertEquals("snippet/url", reader.readUrl)
+        assertEquals("test/url", testReader.readUrl)
         assertEquals("println(\"hi\");", executor.source)
         assertEquals("1.1", executor.version)
         assertEquals(listOf("in-1"), executor.inputs)
@@ -32,15 +33,15 @@ class TestUseCaseTest {
     @Test
     fun `returns Failed when outputs do not match expectedOutputs`() {
         val reader = RecordingCodeReader("println(\"actual\");")
+        val testReader = RecordingTestContentReader(TestContent(emptyList(), listOf("expected")))
         val executor = RecordingCodeExecutor(ExecutionResult.Success(listOf("actual")))
-        val useCase = TestUseCase(reader, executor)
+        val useCase = TestUseCase(reader, testReader, executor)
 
         val result =
             useCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = emptyList(),
-                expectedOutputs = listOf("expected"),
+                testUrl = "test/url",
             )
 
         assertEquals(
@@ -52,15 +53,15 @@ class TestUseCaseTest {
     @Test
     fun `returns Failed with execution errors when execution fails`() {
         val reader = RecordingCodeReader("let x: number = \"bad\";")
+        val testReader = RecordingTestContentReader(TestContent(emptyList(), emptyList()))
         val executor = RecordingCodeExecutor(ExecutionResult.Failure(listOf("Type mismatch")))
-        val useCase = TestUseCase(reader, executor)
+        val useCase = TestUseCase(reader, testReader, executor)
 
         val result =
             useCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = emptyList(),
-                expectedOutputs = emptyList(),
+                testUrl = "test/url",
             )
 
         assertEquals(TestResult.Failed("Type mismatch"), result)
@@ -69,15 +70,15 @@ class TestUseCaseTest {
     @Test
     fun `returns default message when execution fails without error details`() {
         val reader = RecordingCodeReader("invalid")
+        val testReader = RecordingTestContentReader(TestContent(emptyList(), emptyList()))
         val executor = RecordingCodeExecutor(ExecutionResult.Failure(emptyList()))
-        val useCase = TestUseCase(reader, executor)
+        val useCase = TestUseCase(reader, testReader, executor)
 
         val result =
             useCase.execute(
                 codeUrl = "snippet/url",
                 version = "1.1",
-                inputs = emptyList(),
-                expectedOutputs = emptyList(),
+                testUrl = "test/url",
             )
 
         assertEquals(TestResult.Failed("Execution failed"), result)
@@ -91,6 +92,17 @@ class TestUseCaseTest {
         override fun read(codeUrl: String): String {
             readUrl = codeUrl
             return source
+        }
+    }
+
+    private class RecordingTestContentReader(
+        private val content: TestContent,
+    ) : TestContentReader {
+        var readUrl: String? = null
+
+        override fun read(url: String): TestContent {
+            readUrl = url
+            return content
         }
     }
 
