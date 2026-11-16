@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.http.HttpMethod
 import org.springframework.http.MediaType
 import org.springframework.test.web.client.MockRestServiceServer
+import org.springframework.test.web.client.match.MockRestRequestMatchers.header
 import org.springframework.test.web.client.match.MockRestRequestMatchers.method
 import org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo
 import org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess
@@ -20,6 +21,7 @@ class StorageTestContentReaderTest {
         server
             .expect(requestTo(url))
             .andExpect(method(HttpMethod.GET))
+            .andExpect(header("Accept", MediaType.APPLICATION_JSON_VALUE))
             .andRespond(withSuccess("""{"inputs":["A","B"],"outputs":["C","D"]}""", MediaType.APPLICATION_JSON))
 
         val content = StorageTestContentReader(builder.build()).read(url)
