@@ -2,6 +2,7 @@ package age.of.printscript.service.test.infrastructure.storage
 
 import age.of.printscript.service.test.application.TestContent
 import age.of.printscript.service.test.application.TestContentReader
+import org.springframework.http.MediaType
 import org.springframework.web.client.RestClient
 import org.springframework.web.client.body
 
@@ -12,6 +13,7 @@ class StorageTestContentReader(
         assetRestClient
             .get()
             .uri(url)
+            .accept(MediaType.APPLICATION_JSON)
             .retrieve()
             .body<TestContent>() ?: error("Test asset is empty")
 }
