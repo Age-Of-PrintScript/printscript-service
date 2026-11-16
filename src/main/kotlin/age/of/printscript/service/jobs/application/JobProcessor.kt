@@ -49,8 +49,10 @@ class JobProcessor(
             SystemErrorJobResponse(request.jobId, exception.message ?: DEFAULT_ERROR_MESSAGE)
         }
 
-    private fun processValidate(request: ValidateJobRequest): JobResponse =
-        when (val result = validateUseCase.execute(request.snippetUrl, request.languageVersion)) {
+    private fun processValidate(request: ValidateJobRequest): JobResponse {
+        val result = validateUseCase.execute(request.snippetUrl, request.languageVersion)
+        logger.info("Validate job {}: valid={}", request.jobId, result is ValidationResult.Valid)
+        return when (result) {
             ValidationResult.Valid ->
                 ValidateJobResponse(
                     jobId = request.jobId,
@@ -64,6 +66,7 @@ class JobProcessor(
                     errors = result.errors.map { ValidationErrorDto(it.message) },
                 )
         }
+    }
 
     private fun processLint(request: LintJobRequest): JobResponse {
         val config = buildLintConfig(request.rules)
@@ -73,6 +76,7 @@ class JobProcessor(
                 version = request.languageVersion,
                 config = config,
             )
+        logger.info("Lint job {}: warningsCount={}", request.jobId, warnings.size)
 
         return LintJobResponse(
             jobId = request.jobId,
@@ -87,18 +91,19 @@ class JobProcessor(
             version = request.languageVersion,
             config = config,
         )
+        logger.info("Format job {} completed successfully", request.jobId)
         return FormatJobResponse(jobId = request.jobId)
     }
 
-    private fun processTest(request: TestJobRequest): JobResponse =
-        when (
-            val result =
-                testUseCase.execute(
-                    codeUrl = request.snippetUrl,
-                    version = request.languageVersion,
-                    testUrl = request.testUrl,
-                )
-        ) {
+    private fun processTest(request: TestJobRequest): JobResponse {
+        val result =
+            testUseCase.execute(
+                codeUrl = request.snippetUrl,
+                version = request.languageVersion,
+                testUrl = request.testUrl,
+            )
+        logger.info("Test job {}: success={}", request.jobId, result is TestResult.Passed)
+        return when (result) {
             TestResult.Passed ->
                 TestJobResponse(
                     jobId = request.jobId,
@@ -112,6 +117,7 @@ class JobProcessor(
                     message = result.message,
                 )
         }
+    }
 
     private fun toLintWarningDto(warning: Warning): LintWarningDto =
         LintWarningDto(
