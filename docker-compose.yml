@@ -41,6 +41,8 @@ services:
         environment:
             ASSET_SERVICE_URL: http://asset-service:8080
             REDIS_HOST: redis
+            NEW_RELIC_APP_NAME: "printscript-service"
+            NEW_RELIC_AGENT_ENABLED: "false"
         depends_on:
             - asset-service
             - redis
