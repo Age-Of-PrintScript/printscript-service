@@ -7,6 +7,7 @@ import age.of.printscript.service.validation.domain.ValidationResult
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import org.slf4j.LoggerFactory
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
@@ -19,13 +20,26 @@ class ValidationController(
     private val validate: ValidateUseCase,
     private val validateSource: ValidateSourceUseCase,
 ) {
+    private val log = LoggerFactory.getLogger(ValidationController::class.java)
+
     @PostMapping
     fun validate(
         @Valid @RequestBody request: ValidateRequest,
     ): ResponseEntity<*> =
         when (val result = validate.execute(request.codeUrl, request.version)) {
-            ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
-            is ValidationResult.Invalid -> ResponseEntity.ok(result.toResponse())
+            ValidationResult.Valid -> {
+                log.info("Validated code url='{}' version={}: valid=true", request.codeUrl, request.version)
+                ResponseEntity.noContent().build<Any>()
+            }
+            is ValidationResult.Invalid -> {
+                log.warn(
+                    "Validated code url='{}' version={}: valid=false errorsCount={}",
+                    request.codeUrl,
+                    request.version,
+                    result.errors.size,
+                )
+                ResponseEntity.ok(result.toResponse())
+            }
         }
 
     @PostMapping("/new")
@@ -33,8 +47,18 @@ class ValidationController(
         @Valid @RequestBody request: ValidateNewRequest,
     ): ResponseEntity<*> =
         when (val result = validateSource.execute(request.code, request.version)) {
-            ValidationResult.Valid -> ResponseEntity.noContent().build<Any>()
-            is ValidationResult.Invalid -> ResponseEntity.ok(result.toResponse())
+            ValidationResult.Valid -> {
+                log.info("Validated new code version={}: valid=true", request.version)
+                ResponseEntity.noContent().build<Any>()
+            }
+            is ValidationResult.Invalid -> {
+                log.warn(
+                    "Validated new code version={}: valid=false errorsCount={}",
+                    request.version,
+                    result.errors.size,
+                )
+                ResponseEntity.ok(result.toResponse())
+            }
         }
 }
 

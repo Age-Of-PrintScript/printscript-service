@@ -6,11 +6,15 @@ import age.of.printscript.jobs.QueueNames
 import age.of.printscript.jobs.ValidateJobRequest
 import age.of.printscript.jobs.ValidateJobResponse
 import age.of.printscript.service.jobs.application.JobProcessor
+import age.of.printscript.service.shared.infrastructure.filter.RequestLoggingFilter
+import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.verifyNoInteractions
 import org.mockito.Mockito.`when`
+import org.slf4j.MDC
 import org.springframework.data.redis.connection.stream.MapRecord
 import org.springframework.data.redis.connection.stream.RecordId
 import org.springframework.data.redis.core.StreamOperations
@@ -98,5 +102,42 @@ class JobStreamListenerTest {
             QueueNames.PRINTSCRIPT_WORKER_GROUP,
             recordId,
         )
+    }
+
+    @Test
+    fun `sets correlation-id and service in MDC during processing and clears them afterwards`() {
+        val recordId = RecordId.of("1700000000000-3")
+        val request =
+            ValidateJobRequest(
+                jobId = "job-mdc-test",
+                snippetId = "snip-1",
+                snippetUrl = "snippet/url",
+                languageVersion = "1.1",
+            )
+        val response = ValidateJobResponse(jobId = "job-mdc-test", isValid = true)
+
+        var correlationIdInProcessor: String? = null
+        var serviceInProcessor: String? = null
+
+        `when`(jobProcessor.process(request)).thenAnswer {
+            correlationIdInProcessor = MDC.get(RequestLoggingFilter.CORRELATION_ID_KEY)
+            serviceInProcessor = MDC.get(RequestLoggingFilter.SERVICE_KEY)
+            response
+        }
+
+        val json = JobSerializer.serializeRequest(request)
+        val record =
+            MapRecord
+                .create(
+                    QueueNames.REQUESTS_STREAM,
+                    mapOf(PAYLOAD_FIELD to json),
+                ).withId(recordId)
+
+        listener.onMessage(record)
+
+        assertEquals("job-mdc-test", correlationIdInProcessor)
+        assertEquals("printscript-service", serviceInProcessor)
+        assertNull(MDC.get(RequestLoggingFilter.CORRELATION_ID_KEY))
+        assertNull(MDC.get(RequestLoggingFilter.SERVICE_KEY))
     }
 }
