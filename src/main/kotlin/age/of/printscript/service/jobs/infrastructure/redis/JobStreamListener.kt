@@ -4,6 +4,7 @@ import age.of.printscript.jobs.JobSerializer
 import age.of.printscript.jobs.PAYLOAD_FIELD
 import age.of.printscript.jobs.QueueNames
 import age.of.printscript.service.jobs.application.JobProcessor
+import com.newrelic.api.agent.Trace
 import org.slf4j.LoggerFactory
 import org.springframework.data.redis.connection.stream.MapRecord
 import org.springframework.data.redis.core.StringRedisTemplate
@@ -18,6 +19,7 @@ class JobStreamListener(
 ) : StreamListener<String, MapRecord<String, String, String>> {
     private val logger = LoggerFactory.getLogger(JobStreamListener::class.java)
 
+    @Trace(dispatcher = true)
     @Suppress("TooGenericExceptionCaught")
     override fun onMessage(record: MapRecord<String, String, String>) {
         val payload =
@@ -29,6 +31,7 @@ class JobStreamListener(
 
         try {
             val request = JobSerializer.deserializeRequest(payload)
+            RedisTraceHeaders.accept(request.traceHeaders)
             logger.info("Processing job request: jobId={}, type={}", request.jobId, request::class.simpleName)
 
             val response = jobProcessor.process(request)
