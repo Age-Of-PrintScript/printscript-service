@@ -1,0 +1,36 @@
+# New Relic Java agent configuration.
+#
+# Anything environment-specific or secret is intentionally NOT set here and must be
+# provided through environment variables (they take precedence over this file):
+#   NEW_RELIC_LICENSE_KEY    (required) ingest license key
+#   NEW_RELIC_APP_NAME       (required) application name
+#   NEW_RELIC_AGENT_ENABLED  (optional) set to false to disable the agent
+#   NEW_RELIC_LOG_LEVEL      (optional) overrides log_level below
+# Any other setting can be overridden the same way: NEW_RELIC_<SETTING_NAME_UPPERCASED>.
+
+common: &default_settings
+  # Log to stdout so the container runtime collects the agent logs.
+  log_file_name: STDOUT
+  log_level: info
+
+  distributed_tracing:
+    enabled: true
+
+  application_logging:
+    enabled: true
+    forwarding:
+      enabled: true
+    metrics:
+      enabled: true
+    local_decorating:
+      enabled: false
+
+  transaction_tracer:
+    enabled: true
+    record_sql: obfuscated
+
+  error_collector:
+    enabled: true
+
+  browser_monitoring:
+    auto_instrument: false

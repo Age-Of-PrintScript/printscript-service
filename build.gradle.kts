@@ -21,16 +21,28 @@ repositories {
     }
 }
 
+val newRelicVersion = "9.5.0"
+
+val newrelic = configurations.create("newrelic") {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+    isTransitive = false
+}
+
 dependencies {
+    newrelic("com.newrelic.agent.java:newrelic-agent:$newRelicVersion")
+
     implementation(platform("org.springframework.boot:spring-boot-dependencies:3.4.3"))
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
-    implementation("printscript.grupo1:printscript-jobs:1.0.1")
+    implementation("printscript.grupo1:printscript-jobs:1.0.3")
+    implementation("com.newrelic.agent.java:newrelic-api:$newRelicVersion")
     implementation("printscript.grupo1:engine:1.1.1")
     implementation("printscript.grupo1:linter:1.1.1")
+    implementation("printscript.grupo1:formatter:1.1.1")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     testImplementation("org.springframework.boot:spring-boot-starter-test")
@@ -40,6 +52,16 @@ kotlin {
     compilerOptions {
         freeCompilerArgs.addAll("-Xjsr305=strict", "-Xannotation-default-target=param-property")
     }
+}
+
+tasks.register<Sync>("copyNewRelic") {
+    from(newrelic) {
+        rename { "newrelic.jar" }
+    }
+    from("newrelic") {
+        include("newrelic.yml")
+    }
+    into(layout.buildDirectory.dir("newrelic"))
 }
 
 val jacocoExclusions = listOf(

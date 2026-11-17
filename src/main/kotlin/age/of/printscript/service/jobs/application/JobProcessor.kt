@@ -11,12 +11,15 @@ import age.of.printscript.jobs.LintWarningDto
 import age.of.printscript.jobs.PositionDto
 import age.of.printscript.jobs.SystemErrorJobResponse
 import age.of.printscript.jobs.TestJobRequest
+import age.of.printscript.jobs.TestJobResponse
 import age.of.printscript.jobs.ValidateJobRequest
 import age.of.printscript.jobs.ValidateJobResponse
 import age.of.printscript.jobs.ValidationErrorDto
+import age.of.printscript.service.format.application.FormatUseCase
 import age.of.printscript.service.lint.application.LinterUseCase
 import age.of.printscript.service.lint.domain.Warning
-import age.of.printscript.service.shared.application.CodeReader
+import age.of.printscript.service.test.application.TestUseCase
+import age.of.printscript.service.test.domain.TestResult
 import age.of.printscript.service.validation.application.ValidateUseCase
 import age.of.printscript.service.validation.domain.ValidationResult
 import org.slf4j.LoggerFactory
@@ -26,7 +29,8 @@ import org.springframework.stereotype.Component
 class JobProcessor(
     private val validateUseCase: ValidateUseCase,
     private val linterUseCase: LinterUseCase,
-    private val codeReader: CodeReader,
+    private val formatUseCase: FormatUseCase,
+    private val testUseCase: TestUseCase,
 ) {
     private val logger = LoggerFactory.getLogger(JobProcessor::class.java)
 
@@ -38,15 +42,17 @@ class JobProcessor(
                 is LintJobRequest -> processLint(request)
                 is FormatJobRequest -> processFormat(request)
                 is ExecuteJobRequest -> SystemErrorJobResponse(request.jobId, EXECUTE_NOT_IMPLEMENTED)
-                is TestJobRequest -> SystemErrorJobResponse(request.jobId, TEST_NOT_IMPLEMENTED)
+                is TestJobRequest -> processTest(request)
             }
         } catch (exception: Exception) {
             logger.error("Failed to process job ${request.jobId}", exception)
             SystemErrorJobResponse(request.jobId, exception.message ?: DEFAULT_ERROR_MESSAGE)
         }
 
-    private fun processValidate(request: ValidateJobRequest): JobResponse =
-        when (val result = validateUseCase.execute(request.snippetUrl, request.languageVersion)) {
+    private fun processValidate(request: ValidateJobRequest): JobResponse {
+        val result = validateUseCase.execute(request.snippetUrl, request.languageVersion)
+        logger.info("Validate job {}: valid={}", request.jobId, result is ValidationResult.Valid)
+        return when (result) {
             ValidationResult.Valid ->
                 ValidateJobResponse(
                     jobId = request.jobId,
@@ -60,6 +66,7 @@ class JobProcessor(
                     errors = result.errors.map { ValidationErrorDto(it.message) },
                 )
         }
+    }
 
     private fun processLint(request: LintJobRequest): JobResponse {
         val config = buildLintConfig(request.rules)
@@ -69,6 +76,7 @@ class JobProcessor(
                 version = request.languageVersion,
                 config = config,
             )
+        logger.info("Lint job {}: warningsCount={}", request.jobId, warnings.size)
 
         return LintJobResponse(
             jobId = request.jobId,
@@ -77,8 +85,38 @@ class JobProcessor(
     }
 
     private fun processFormat(request: FormatJobRequest): JobResponse {
-        codeReader.read(request.snippetUrl)
+        val config = buildFormatConfig(request.rules)
+        formatUseCase.execute(
+            codeUrl = request.snippetUrl,
+            version = request.languageVersion,
+            config = config,
+        )
+        logger.info("Format job {} completed successfully", request.jobId)
         return FormatJobResponse(jobId = request.jobId)
+    }
+
+    private fun processTest(request: TestJobRequest): JobResponse {
+        val result =
+            testUseCase.execute(
+                codeUrl = request.snippetUrl,
+                version = request.languageVersion,
+                testUrl = request.testUrl,
+            )
+        logger.info("Test job {}: success={}", request.jobId, result is TestResult.Passed)
+        return when (result) {
+            TestResult.Passed ->
+                TestJobResponse(
+                    jobId = request.jobId,
+                    success = true,
+                    message = null,
+                )
+            is TestResult.Failed ->
+                TestJobResponse(
+                    jobId = request.jobId,
+                    success = false,
+                    message = result.message,
+                )
+        }
     }
 
     private fun toLintWarningDto(warning: Warning): LintWarningDto =
@@ -101,9 +139,23 @@ class JobProcessor(
         return """{"rules":[$entries]}"""
     }
 
+    private fun buildFormatConfig(rules: Map<String, String?>): String? {
+        if (rules.isEmpty()) return null
+        val entries =
+            rules.entries.joinToString(",") { (name, value) ->
+                val formattedValue =
+                    when {
+                        value == null -> "true"
+                        value.toIntOrNull() != null || value == "true" || value == "false" -> value
+                        else -> "\"$value\""
+                    }
+                "\"$name\":$formattedValue"
+            }
+        return "{$entries}"
+    }
+
     private companion object {
         const val EXECUTE_NOT_IMPLEMENTED = "EXECUTE is not implemented yet"
-        const val TEST_NOT_IMPLEMENTED = "TEST is not implemented yet"
         const val DEFAULT_ERROR_MESSAGE = "Failed to process job"
         const val IDENTIFIER_FORMAT_RULE = "identifier-format"
         const val CONVENTION_PARAM = "convention"
